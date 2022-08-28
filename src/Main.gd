@@ -1,11 +1,11 @@
 extends Spatial
 
 
-onready var test_pattern = $Pattern
-
 
 func _on_Flip_pressed():
-	if test_pattern.direction == Globals.Directions.LEFT:
-		test_pattern.direction = Globals.Directions.RIGHT
-	else:
-		test_pattern.direction = Globals.Directions.LEFT
+	var patterns = get_tree().get_nodes_in_group("pattern")
+	for test_pattern in patterns:
+		if test_pattern.direction == Globals.Directions.LEFT:
+			test_pattern.direction = Globals.Directions.RIGHT
+		else:
+			test_pattern.direction = Globals.Directions.LEFT

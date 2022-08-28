@@ -11,6 +11,9 @@ var direction:int setget _set_direction
 var label:String setget , _get_label
 var index:int = 0
 
+var hovered:bool = false
+var focused:bool = false setget _set_focused
+
 # Nodes
 onready var mesh:MeshInstance = $MeshInstance
 onready var material:Material = mesh.get_surface_material(0)
@@ -19,10 +22,14 @@ onready var label_3d:Label3D = $Label3D
 
 func _ready():
 	update_direction_vector()
+	
+	Signals.connect("leg_clicked", self, "_on_leg_clicked")
 
 
 func update_direction_vector():
 	if not is_instance_valid(material): return
+	
+	var is_left = direction == Globals.Directions.LEFT
 	
 	var vector:Vector2 = start - end
 	var size = abs(vector.length())
@@ -40,6 +47,7 @@ func update_direction_vector():
 	
 	
 	label_3d.text = self.label
+	label_3d.rotation_degrees.y = 90 if is_left else -90
 	
 	mesh.scale.x = size
 	material.set_shader_param("size", size)
@@ -68,7 +76,38 @@ func _set_direction(value:int) -> void:
 	update_direction_vector()
 
 
+func _set_focused(value) -> void:
+	if focused == value: return
+	focused = value
+	
+	var color = Colors.GREEN
+	if focused: color = Colors.YELLOW
+	material.set_shader_param("color", color)
+		
+
 func _get_label() -> String:
 	var keys =  Globals.Legs.keys().duplicate()
 	if direction == Globals.Directions.LEFT: keys.invert()
 	return keys[index]
+
+
+func _on_Area_mouse_entered():
+	label_3d.show()
+	hovered = true
+
+
+func _on_Area_mouse_exited():
+	label_3d.hide()
+	hovered = false
+
+
+func _on_Area_input_event(camera, event, position, normal, shape_idx):
+	if event is InputEventMouseButton:
+		if event.button_index == BUTTON_LEFT and event.pressed:
+			if hovered:
+				Signals.emit_signal("leg_clicked", self)
+				self.focused = !focused
+
+
+func _on_leg_clicked(leg):
+	if leg != self: self.focused = false

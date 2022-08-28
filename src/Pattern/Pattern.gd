@@ -1,7 +1,7 @@
 extends Spatial
 
 
-class_name TrafficPattern
+class_name Pattern
 
 
 signal direction_changed(value)
@@ -14,7 +14,7 @@ const SCALE:float = 0.1
 
 # Vars
 # ----------------------------
-var direction:int = Globals.Directions.LEFT setget _set_direction
+export(Globals.Directions) var direction:int = Globals.Directions.LEFT setget _set_direction
 
 # Nodes
 # ----------------------------

@@ -1,18 +1,22 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://Pattern.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Runway.tscn" type="PackedScene" id=1]
 [ext_resource path="res://MainCamera.gd" type="Script" id=2]
 [ext_resource path="res://Main.gd" type="Script" id=3]
 
-[node name="Spatial" type="Spatial"]
+[node name="Main" type="Spatial"]
 script = ExtResource( 3 )
 
-[node name="Pattern" parent="." instance=ExtResource( 1 )]
+[node name="Runway" parent="." instance=ExtResource( 1 )]
 
-[node name="Camera" type="Camera" parent="."]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 40, 0 )
-current = true
+[node name="MainCamera" type="Spatial" parent="."]
 script = ExtResource( 2 )
+
+[node name="CameraTarget" type="Spatial" parent="MainCamera"]
+
+[node name="Camera" type="Camera" parent="MainCamera"]
+transform = Transform( 1, 0, 0, 0, 0.337818, 0.941211, 0, -0.941211, 0.337818, 0, 40, 8.44604 )
+current = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -21,7 +25,8 @@ margin_right = 40.0
 margin_bottom = 40.0
 
 [node name="Flip" type="Button" parent="CanvasLayer/Layout"]
-margin_right = 40.0
+margin_right = 98.0
 margin_bottom = 40.0
+text = "Flip Direction"
 
 [connection signal="pressed" from="CanvasLayer/Layout/Flip" to="." method="_on_Flip_pressed"]
