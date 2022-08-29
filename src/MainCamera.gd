@@ -1,6 +1,6 @@
 extends Spatial
 
-const Y_DISTANCE:float = 30.0
+const Y_DISTANCE:float = 20.0
 
 var target_speed:float = 0.8
 var camera_speed:float = 3.0
