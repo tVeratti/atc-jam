@@ -12,22 +12,28 @@ _global_script_classes=[ {
 "base": "Node",
 "class": "Colors",
 "language": "GDScript",
-"path": "res://Colors.gd"
+"path": "res://Infrastructure/Colors.gd"
 }, {
 "base": "Node",
 "class": "Globals",
 "language": "GDScript",
-"path": "res://Globals.gd"
+"path": "res://Infrastructure/Globals.gd"
 }, {
 "base": "Spatial",
 "class": "Pattern",
 "language": "GDScript",
 "path": "res://Pattern/Pattern.gd"
+}, {
+"base": "Object",
+"class": "Random",
+"language": "GDScript",
+"path": "res://Infrastructure/Random.gd"
 } ]
 _global_script_class_icons={
 "Colors": "",
 "Globals": "",
-"Pattern": ""
+"Pattern": "",
+"Random": ""
 }
 
 [application]
@@ -38,7 +44,7 @@ config/icon="res://icon.png"
 
 [autoload]
 
-Signals="*res://Signals.gd"
+Signals="*res://Infrastructure/Signals.gd"
 
 [gui]
 

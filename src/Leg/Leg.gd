@@ -1,6 +1,7 @@
 extends Spatial
 
-const MIDPOINT_LEGS:Array = ["DOWNWIND"]
+const MIDPOINT_LEGS:Array = [Globals.Legs.DOWNWIND]
+const NO_ENTRY_LEGS:Array = [Globals.Legs.DEPARTURE, Globals.Legs.CROSSWIND]
 
 
 # The leg's physical direction and magnitude for scaling the mesh.
@@ -13,9 +14,11 @@ var direction:int setget _set_direction
 # Derived label based on direction and index within the overall pattern
 var label:String setget , _get_label
 var index:int = 0
+var index_directional:int = 0
 
 var hovered:bool = false
 var focused:bool = false setget _set_focused
+var disabled:bool setget , _get_disabled
 
 # Nodes
 onready var pattern =  get_parent().get_parent()
@@ -61,23 +64,23 @@ func update_direction_vector():
 
 func get_entry(from_point:Vector3) -> Vector3:
 	var is_left = direction == Globals.Directions.LEFT
-	var start_2d:Vector2 = end if is_left else start
-	var start_directional:Vector3 = Vector3(start_2d.x, 0, start_2d.y)
+	var start_directional:Vector2 = end if is_left else start
+	var start_3d:Vector3 = Vector3(start_directional.x, 0, start_directional.y)
 	
-	if MIDPOINT_LEGS.has(_get_label()):
+	if MIDPOINT_LEGS.has(index_directional):
 		# DOWNWIND legs can allow the plane to enter at the midpoint (center) if it's closer
 		var center_2d = _get_center()
 		var center = Vector3(center_2d.x, 0, center_2d.y)
-		if from_point.distance_to(center) < from_point.distance_to(start_directional):
+		if from_point.distance_to(center) < from_point.distance_to(start_3d):
 			return center
 			
-	return start_directional
+	return start_3d
 
 
 func get_exit() -> Vector3:
 	var is_left = direction == Globals.Directions.LEFT
-	var end_2d:Vector2 = start if is_left else end
-	return Vector3(end_2d.x, 0, end_2d.y)
+	var end_directional:Vector2 = start if is_left else end
+	return Vector3(end_directional.x, 0, end_directional.y)
 
 
 func _get_center() -> Vector2:
@@ -99,6 +102,8 @@ func _set_end(value:Vector2) -> void:
 
 func _set_direction(value:int) -> void:
 	direction = value
+	
+	_update_index_directional()
 	update_direction_vector()
 
 
@@ -109,12 +114,23 @@ func _set_focused(value) -> void:
 	var color = Colors.GREEN
 	if focused: color = Colors.YELLOW
 	material.set_shader_param("color", color)
-		
+
 
 func _get_label() -> String:
-	var keys =  Globals.Legs.keys().duplicate()
-	if direction == Globals.Directions.LEFT: keys.invert()
-	return keys[index]
+	return Globals.Legs.keys()[index_directional]
+
+
+func _get_disabled() -> bool:
+	return NO_ENTRY_LEGS.has(index_directional)
+
+
+func _update_index_directional() -> void:
+	# Invert the index so that it properly selects from the Globals
+	# in the new direction (left: inverse / right: normal)
+	if direction == Globals.Directions.LEFT:
+		index_directional = Globals.Legs.size() - 1 - index
+	else:
+		index_directional = index
 
 
 func _on_Area_mouse_entered():
@@ -130,7 +146,7 @@ func _on_Area_mouse_exited():
 func _on_Area_input_event(camera, event, position, normal, shape_idx):
 	if event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT and event.pressed:
-			if hovered:
+			if hovered and not self.disabled:
 				Signals.emit_signal("leg_clicked", self)
 				self.focused = !focused
 

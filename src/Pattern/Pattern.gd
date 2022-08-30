@@ -29,7 +29,6 @@ func _ready():
 # Using the path node, build meshes that can be textured with shaders
 # in order to display each leg and the pattern direction.
 func construct_path_mesh():
-	
 	var index:int = 0
 	var path:PoolVector2Array = map_reference.points
 	var path_size:int = path.size()
@@ -46,11 +45,15 @@ func construct_path_mesh():
 			leg_scene.index = index
 			leg_scene.direction = direction
 			legs.add_child(leg_scene)
+			
+			# If the pattern direction changes, update all legs with the new direction
 			connect("direction_changed", leg_scene, "_set_direction")
 			
 		index += 1
 
 
 func _set_direction(value:int) -> void:
+	if value == direction: return
+	
 	direction = value
 	emit_signal("direction_changed", direction)
