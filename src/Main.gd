@@ -6,7 +6,7 @@ const PlaneScene = preload("res://Plane/Plane.tscn")
 const SPAWN_MULTIPLIER:float = 80.0
 const MAX_SPAWN_TIME:int = 45
 const MIN_SPAWN_TIME:int = 15
-const MAX_PLANES:int = 1
+const MAX_PLANES:int = 3
 
 var active_plane:Spatial
 

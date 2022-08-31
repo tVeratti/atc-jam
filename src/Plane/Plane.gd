@@ -21,6 +21,7 @@ var call_sign setget , _get_call_sign
 var state:int = States.CRUISE
 var next_path_location:Vector3 = Vector3.ZERO
 var _saved_path_location:Vector3 = Vector3.ZERO
+var _path_override:bool = false
 
 var current_turn_angle:float = 0.0
 var current_leg:Spatial setget _set_current_leg
@@ -114,22 +115,27 @@ func check_path():
 
 
 func check_raycast():
-	var path:Vector3 = _saved_path_location if _saved_path_location != Vector3.ZERO else next_path_location
-	path_raycast.look_at(next_path_location, Vector3.UP)
+	var path:Vector3 = _saved_path_location if _path_override else next_path_location
+	path_raycast.look_at(path, Vector3.UP)
 	path_raycast.force_raycast_update()
 	
-	if not path_raycast.enabled: return
+	if _path_override and path_timer.is_stopped():
+		_path_override = false
+		next_path_location = _saved_path_location
 	
-	if path_raycast.is_colliding():
-		var collider = path_raycast.get_collider().get_parent().get_parent()
+	if not path_raycast.enabled: return
+	if path_raycast.is_colliding() and not _path_override:
+		var collider:Spatial = path_raycast.get_collider().get_parent().get_parent()
+		var collision_point:Vector3 = path_raycast.get_collision_point()
 		if collider.has_method("get_entry"):
-			if collider != current_leg:
+			if collider != current_leg and collision_point.distance_to(path) > PATH_DISTANCE:
 				# Avoid until the raycast can safely reach
 				# Temporarily override the desired path
-				_update_path_to_avoid(path_raycast.get_collision_point())
+				_update_path_to_avoid(collision_point)
 				path_timer.start()
-				path_raycast.enabled = false
 				return
+			else:
+				path_raycast.enabled = false
 
 
 func land():
@@ -149,17 +155,16 @@ func _update_path_to_avoid(collision_point:Vector3):
 	var origin:Vector3 = global_transform.origin
 	var origin_2d:Vector2 = Vector2(origin.x, origin.z)
 	var angle:float = origin_2d.angle_to_point(Vector2.ZERO) + deg2rad(20.0)
+	
 	var x:float = CIRCLE_DISTANCE * cos(angle)
 	var y:float = CIRCLE_DISTANCE * sin(angle)
 	
-#	var forward_point:Vector3 = global_transform.origin - (global_transform.basis.z.normalized() * 5)
-#	var collision_angle:float = forward_point.signed_angle_to(collision_point, Vector3.UP)
-#	var direction_to_collision:Vector3 = forward_point.direction_to(collision_point).normalized()
-#	var rotated_collision = direction_to_collision.bounce(Vector3.UP)
 	var next_point:Vector3 = global_transform.origin - (lookat_test.global_transform.basis.z * 10)
 	
-#	print(forward_point.dot(collision_point))
-	_saved_path_location = next_path_location
+	if not _path_override:
+		_saved_path_location = next_path_location
+		_path_override = true
+	
 	next_path_location = Vector3(x, 0, y)
 
 
@@ -232,7 +237,4 @@ func _on_Area_input_event(camera, event, position, normal, shape_idx):
 
 
 func _on_PathCheckTimer_timeout():
-	path_raycast.enabled = true
-	
-	next_path_location = _saved_path_location
-	_saved_path_location = Vector3.ZERO
+	pass
