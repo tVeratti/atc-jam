@@ -26,7 +26,8 @@ mesh = SubResource( 1 )
 material/0 = SubResource( 3 )
 
 [node name="Area" type="Area" parent="MeshInstance"]
-transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0 )
+transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 1, 0, 0, 0 )
+collision_layer = 3
 
 [node name="CollisionShape" type="CollisionShape" parent="MeshInstance/Area"]
 transform = Transform( 1, -5.04467e-44, 6.05024e-22, 0, 1, 8.35187e-23, -6.05024e-22, -8.35187e-23, 1, 0, 0, 0 )

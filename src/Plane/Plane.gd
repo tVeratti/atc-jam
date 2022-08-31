@@ -3,14 +3,15 @@ extends KinematicBody
 
 enum States {  CLIMB, CRUISE, DESCEND, LAND }
 
-const PATH_DISTANCE:float = 4.0
+const PATH_DISTANCE:float = 6.0
+const CIRCLE_DISTANCE:float = 40.0
 const MAX_PITCH:float = 20.0
 const MAX_ROLL:float = 60.0
 
-export(float) var air_speed:float = 5.0#2.0
+export(float) var air_speed:float = 2.0
 export(float) var pitch_speed:float = 5.0
 export(float) var roll_speed:float = 1.0
-export(float) var yaw_speed:float = 2.0#0.5
+export(float) var yaw_speed:float = 0.5
 
 var color
 var animal
@@ -19,6 +20,7 @@ var call_sign setget , _get_call_sign
 
 var state:int = States.CRUISE
 var next_path_location:Vector3 = Vector3.ZERO
+var _saved_path_location:Vector3 = Vector3.ZERO
 
 var current_turn_angle:float = 0.0
 var current_leg:Spatial setget _set_current_leg
@@ -31,6 +33,9 @@ onready var mesh:MeshInstance = $MeshInstance
 onready var outline:MeshInstance = get_node("%Outline")
 onready var lookat_test:Position3D = $LookAtTest
 onready var sign_label:Label3D = $Label3D
+onready var path_raycast:RayCast = $PathCheckRayCast
+onready var path_timer:Timer = $PathCheckTimer
+onready var path_mesh:MeshInstance = $PathMesh
 
 
 func _ready():
@@ -51,6 +56,7 @@ func _physics_process(delta):
 	global_transform.origin -= global_transform.basis.z * delta * air_speed
 	
 	check_path()
+	check_raycast()
 	handle_pitch(delta)
 	handle_yaw(delta)
 	handle_roll(delta)
@@ -85,11 +91,15 @@ func handle_yaw(delta) -> void:
 
 
 func check_path():
-	if not is_instance_valid(current_leg): return
+	if not is_instance_valid(current_leg): return # not on a pattern yet
+	
+	path_mesh.global_transform.origin = next_path_location
 	if global_transform.origin.distance_to(next_path_location) < PATH_DISTANCE:
 		if next_path_location == current_leg.get_entry(global_transform.origin):
+			path_raycast.enabled = false
 			next_path_location = current_leg.get_exit()
-		else:
+		elif next_path_location == current_leg.get_exit():
+			path_raycast.enabled = false
 			var current_pattern = current_leg.pattern
 			var index_delta = 1 if current_pattern.direction == Globals.Directions.RIGHT else -1
 			var next_index = current_leg.index + index_delta
@@ -101,6 +111,25 @@ func check_path():
 				return
 			
 			self.current_leg = legs[next_index]
+
+
+func check_raycast():
+	var path:Vector3 = _saved_path_location if _saved_path_location != Vector3.ZERO else next_path_location
+	path_raycast.look_at(next_path_location, Vector3.UP)
+	path_raycast.force_raycast_update()
+	
+	if not path_raycast.enabled: return
+	
+	if path_raycast.is_colliding():
+		var collider = path_raycast.get_collider().get_parent().get_parent()
+		if collider.has_method("get_entry"):
+			if collider != current_leg:
+				# Avoid until the raycast can safely reach
+				# Temporarily override the desired path
+				_update_path_to_avoid(path_raycast.get_collision_point())
+				path_timer.start()
+				path_raycast.enabled = false
+				return
 
 
 func land():
@@ -116,6 +145,24 @@ func _roll_mesh(amount:float, delta:float) -> void:
 	mesh.rotation_degrees.z = lerp(mesh.rotation_degrees.z, amount, delta * roll_speed)
 
 
+func _update_path_to_avoid(collision_point:Vector3):
+	var origin:Vector3 = global_transform.origin
+	var origin_2d:Vector2 = Vector2(origin.x, origin.z)
+	var angle:float = origin_2d.angle_to_point(Vector2.ZERO) + deg2rad(20.0)
+	var x:float = CIRCLE_DISTANCE * cos(angle)
+	var y:float = CIRCLE_DISTANCE * sin(angle)
+	
+#	var forward_point:Vector3 = global_transform.origin - (global_transform.basis.z.normalized() * 5)
+#	var collision_angle:float = forward_point.signed_angle_to(collision_point, Vector3.UP)
+#	var direction_to_collision:Vector3 = forward_point.direction_to(collision_point).normalized()
+#	var rotated_collision = direction_to_collision.bounce(Vector3.UP)
+	var next_point:Vector3 = global_transform.origin - (lookat_test.global_transform.basis.z * 10)
+	
+#	print(forward_point.dot(collision_point))
+	_saved_path_location = next_path_location
+	next_path_location = Vector3(x, 0, y)
+
+
 # Getters/Setters
 # ------------------------------- 
 
@@ -129,7 +176,6 @@ func _set_current_leg(leg) -> void:
 	
 	var entry = leg.get_entry(global_transform.origin)
 	next_path_location = entry
-	print('next entry ', entry)
 
 
 func _set_current_vector(value) -> void:
@@ -183,3 +229,10 @@ func _on_Area_input_event(camera, event, position, normal, shape_idx):
 			if hovered:
 				self.focused = !focused
 				Signals.emit_signal("plane_focused", self if focused else null)
+
+
+func _on_PathCheckTimer_timeout():
+	path_raycast.enabled = true
+	
+	next_path_location = _saved_path_location
+	_saved_path_location = Vector3.ZERO

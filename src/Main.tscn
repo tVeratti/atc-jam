@@ -33,6 +33,12 @@ current = true
 
 [node name="Planes" type="Spatial" parent="."]
 
+[node name="SpawnTimer" type="Timer" parent="Planes"]
+one_shot = true
+autostart = true
+
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="Interface" parent="CanvasLayer" instance=ExtResource( 4 )]
+
+[connection signal="timeout" from="Planes/SpawnTimer" to="." method="_on_SpawnTimer_timeout"]

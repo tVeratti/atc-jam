@@ -30,7 +30,8 @@ onready var label_3d:Label3D = $Label3D
 func _ready():
 	update_direction_vector()
 	
-	Signals.connect("leg_clicked", self, "_on_leg_clicked")
+	var _a = Signals.connect("leg_clicked", self, "_on_leg_clicked")
+	var _b = Signals.connect("plane_focused", self, "_on_plane_focused")
 
 
 func update_direction_vector():
@@ -153,3 +154,8 @@ func _on_Area_input_event(camera, event, position, normal, shape_idx):
 
 func _on_leg_clicked(leg):
 	if leg != self: self.focused = false
+
+
+func _on_plane_focused(plane):
+	if plane != null:
+		self.focused = plane.current_leg == self
