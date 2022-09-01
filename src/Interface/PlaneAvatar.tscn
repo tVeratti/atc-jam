@@ -82,6 +82,11 @@ margin_right = 42.0
 margin_bottom = 20.0
 text = "View"
 
+[node name="ClickTimer" type="Timer" parent="."]
+wait_time = 0.2
+one_shot = true
+
 [connection signal="gui_input" from="." to="." method="_on_PlaneAvatar_gui_input"]
 [connection signal="mouse_entered" from="." to="." method="_on_PlaneAvatar_mouse_entered"]
 [connection signal="mouse_exited" from="." to="." method="_on_PlaneAvatar_mouse_exited"]
+[connection signal="timeout" from="ClickTimer" to="." method="_on_ClickTimer_timeout"]

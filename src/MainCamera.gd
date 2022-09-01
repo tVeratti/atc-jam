@@ -12,6 +12,7 @@ onready var camera:Camera = $Camera
 
 func _ready():
 	var _a = Signals.connect("plane_focused", self, "_on_plane_focused")
+	var _b = Signals.connect("plane_followed", self, "_on_plane_followed")
 
 
 func _physics_process(delta):
@@ -50,4 +51,8 @@ func lerp_camera(delta):
 
 
 func _on_plane_focused(plane):
+	pass
+
+
+func _on_plane_followed(plane):
 	camera_focus = plane

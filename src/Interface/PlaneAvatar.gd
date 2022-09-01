@@ -5,6 +5,7 @@ var plane
 
 onready var border:Panel = $Border
 onready var call_sign_label:Label = get_node("%CallSign")
+onready var click_timer:Timer = $ClickTimer
 
 
 func _ready():
@@ -46,5 +47,15 @@ func _on_PlaneAvatar_mouse_exited():
 func _on_PlaneAvatar_gui_input(event):
 	if event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT and event.pressed:
-			if plane.hovered: plane.focused = !plane.focused
-			Signals.emit_signal("plane_focused", plane if plane.focused else null)
+			if click_timer.is_stopped():
+				# Single Click
+				click_timer.start()
+			else:
+				# Double Click
+				Signals.emit_signal("plane_followed", plane)
+				click_timer.stop()
+
+
+func _on_ClickTimer_timeout():
+	if plane.hovered: plane.focused = !plane.focused
+	Signals.emit_signal("plane_focused", plane if plane.focused else null)

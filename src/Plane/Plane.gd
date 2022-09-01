@@ -37,6 +37,7 @@ onready var sign_label:Label3D = $Label3D
 onready var path_raycast:RayCast = $PathCheckRayCast
 onready var path_timer:Timer = $PathCheckTimer
 onready var path_mesh:MeshInstance = $PathMesh
+onready var click_timer:Timer = $ClickTimer
 
 
 func _ready():
@@ -232,9 +233,20 @@ func _on_Area_input_event(camera, event, position, normal, shape_idx):
 	if event is InputEventMouseButton:
 		if event.button_index == BUTTON_LEFT and event.pressed:
 			if hovered:
-				self.focused = !focused
-				Signals.emit_signal("plane_focused", self if focused else null)
+				if click_timer.is_stopped():
+					# Single Click
+					 click_timer.start()
+				else:
+					# Double Click
+					click_timer.stop()
+					Signals.emit_signal("plane_followed", self)
+				
 
 
 func _on_PathCheckTimer_timeout():
 	pass
+
+
+func _on_ClickTimer_timeout():
+	self.focused = !focused
+	Signals.emit_signal("plane_focused", self if focused else null)

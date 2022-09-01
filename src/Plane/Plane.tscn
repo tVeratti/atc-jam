@@ -49,6 +49,7 @@ visible = false
 [node name="Outline" type="MeshInstance" parent="MeshInstance"]
 unique_name_in_owner = true
 transform = Transform( -0.2, -1.74846e-08, 7.64274e-16, 0, -8.74228e-09, -0.2, 1.74846e-08, -0.2, 8.74228e-09, 0, 0, 0 )
+visible = false
 mesh = SubResource( 2 )
 skeleton = NodePath("../MeshInstance")
 material/0 = SubResource( 3 )
@@ -63,6 +64,10 @@ mesh = ExtResource( 2 )
 transform = Transform( -0.2, -1.74846e-08, 7.64274e-16, 0, -8.74228e-09, -0.2, 1.74846e-08, -0.2, 8.74228e-09, 0, 0, 0 )
 shape = SubResource( 1 )
 
+[node name="PathMesh" type="MeshInstance" parent="."]
+visible = false
+mesh = SubResource( 4 )
+
 [node name="PathCheckRayCast" type="RayCast" parent="."]
 enabled = true
 cast_to = Vector3( 0, 0, -30 )
@@ -73,10 +78,12 @@ collide_with_bodies = false
 [node name="PathCheckTimer" type="Timer" parent="."]
 one_shot = true
 
-[node name="PathMesh" type="MeshInstance" parent="."]
-mesh = SubResource( 4 )
+[node name="ClickTimer" type="Timer" parent="."]
+wait_time = 0.2
+one_shot = true
 
 [connection signal="input_event" from="Area" to="." method="_on_Area_input_event"]
 [connection signal="mouse_entered" from="Area" to="." method="_on_Area_mouse_entered"]
 [connection signal="mouse_exited" from="Area" to="." method="_on_Area_mouse_exited"]
 [connection signal="timeout" from="PathCheckTimer" to="." method="_on_PathCheckTimer_timeout"]
+[connection signal="timeout" from="ClickTimer" to="." method="_on_ClickTimer_timeout"]

@@ -19,6 +19,7 @@ var index_directional:int = 0
 var hovered:bool = false
 var focused:bool = false setget _set_focused
 var disabled:bool setget , _get_disabled
+var full_name:String setget , _get_full_name
 
 # Nodes
 onready var pattern =  get_parent().get_parent()
@@ -123,6 +124,13 @@ func _get_label() -> String:
 
 func _get_disabled() -> bool:
 	return NO_ENTRY_LEGS.has(index_directional)
+
+
+func _get_full_name() -> String:
+	var directions =  Globals.Directions
+	var runway = pattern.runway.name_left if pattern.direction == directions.LEFT else pattern.runway.name_right
+	
+	return "%s: %s %s" % [runway, directions.keys()[pattern.direction], _get_label()]
 
 
 func _update_index_directional() -> void:

@@ -20,6 +20,7 @@ export(Globals.Directions) var direction:int = Globals.Directions.LEFT setget _s
 # ----------------------------
 onready var legs:Spatial = $Legs
 onready var map_reference:Line2D = $MapReference
+onready var runway:Spatial = get_parent()
 
 
 func _ready():
