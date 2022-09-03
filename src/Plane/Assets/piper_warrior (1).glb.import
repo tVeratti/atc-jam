@@ -2,12 +2,12 @@
 
 importer="scene"
 type="PackedScene"
-path="res://.import/piper_warrior.glb-95d5d91ef65427f5b9727b3e69bba963.scn"
+path="res://.import/piper_warrior (1).glb-35d37917f5b69a3a79f625f8874e752b.scn"
 
 [deps]
 
-source_file="res://Plane/Assets/piper_warrior.glb"
-dest_files=[ "res://.import/piper_warrior.glb-95d5d91ef65427f5b9727b3e69bba963.scn" ]
+source_file="res://Plane/Assets/piper_warrior (1).glb"
+dest_files=[ "res://.import/piper_warrior (1).glb-35d37917f5b69a3a79f625f8874e752b.scn" ]
 
 [params]
 

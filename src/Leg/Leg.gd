@@ -130,7 +130,7 @@ func _get_full_name() -> String:
 	var directions =  Globals.Directions
 	var runway = pattern.runway.name_left if pattern.direction == directions.LEFT else pattern.runway.name_right
 	
-	return "%s: %s %s" % [runway, directions.keys()[pattern.direction], _get_label()]
+	return "%s %s %s" % [runway, directions.keys()[pattern.direction], _get_label()]
 
 
 func _update_index_directional() -> void:

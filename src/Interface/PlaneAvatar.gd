@@ -5,6 +5,7 @@ var plane
 
 onready var border:Panel = $Border
 onready var call_sign_label:Label = get_node("%CallSign")
+onready var leg_name_label:Label = get_node("%LegName")
 onready var click_timer:Timer = $ClickTimer
 
 
@@ -13,6 +14,7 @@ func _ready():
 	
 	var _a = Signals.connect("plane_focused", self, "_on_plane_focused_global")
 	var _b = Signals.connect("plane_landed", self, "_on_plane_landed_global")
+	var _c = plane.connect("leg_assigned", self, "_on_leg_assigned")
 
 
 func _on_plane_focused_global(other):
@@ -24,6 +26,10 @@ func _on_plane_focused_global(other):
 
 func _on_plane_landed_global(other):
 	if other == plane: queue_free()
+
+
+func _on_leg_assigned():
+	leg_name_label.text = plane.current_leg.full_name
 
 
 func _on_View_pressed():

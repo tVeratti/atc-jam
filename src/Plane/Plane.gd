@@ -1,5 +1,6 @@
 extends KinematicBody
 
+signal leg_assigned()
 
 enum States {  CLIMB, CRUISE, DESCEND, LAND }
 
@@ -39,6 +40,7 @@ onready var path_timer:Timer = $PathCheckTimer
 onready var path_mesh:MeshInstance = $PathMesh
 onready var click_timer:Timer = $ClickTimer
 
+onready var animation_player:AnimationPlayer = $MeshInstance/piper_warrior/AnimationPlayer
 
 func _ready():
 	generate_identity()
@@ -46,6 +48,9 @@ func _ready():
 	
 	var _a = Signals.connect("plane_hovered", self, "_on_plane_hovered_global")
 	var _b = Signals.connect("plane_focused", self, "_on_plane_focused_global")
+	
+	animation_player.get_animation("PropellorAction").set_loop(true)
+	animation_player.play("PropellorAction")
 
 
 func generate_identity():
@@ -182,6 +187,7 @@ func _set_current_leg(leg) -> void:
 	
 	var entry = leg.get_entry(global_transform.origin)
 	next_path_location = entry
+	emit_signal("leg_assigned")
 
 
 func _set_current_vector(value) -> void:
