@@ -1,10 +1,13 @@
 extends Spatial
 
-const Y_DISTANCE:float = 30.0
+const Y_DISTANCE_MAX:float = 50.0
+const Y_DISTANCE_MIN:float = 10.0
 
 var target_speed:float = 0.8
 var camera_speed:float = 3.0
+var scroll_speed:float = 1.0
 
+var zoom_offset:float = 20.0
 var camera_focus:Spatial
 onready var camera_target:Spatial = $CameraTarget
 onready var camera:Camera = $Camera
@@ -31,6 +34,13 @@ func handle_input():
 	if Input.is_action_pressed("ui_left"):
 		direction.x = -1
 	
+	if Input.is_action_pressed("scroll_in"):
+		zoom_offset += scroll_speed
+	elif Input.is_action_pressed("scroll_out"):
+		zoom_offset -= scroll_speed
+	
+	zoom_offset = clamp(zoom_offset, Y_DISTANCE_MIN, Y_DISTANCE_MAX)
+	
 	if direction != Vector3.ZERO:
 		camera_focus = null
 		camera_target.global_transform.origin += direction.normalized() * target_speed
@@ -45,7 +55,7 @@ func lerp_camera(delta):
 	
 	camera.global_transform.origin = Vector3(
 		lerp(origin.x, target.x, camera_speed * delta),
-		lerp(origin.y, target.y + Y_DISTANCE, camera_speed * delta),
+		lerp(origin.y, target.y + zoom_offset, camera_speed * delta),
 		lerp(origin.z, target.z, camera_speed * delta)
 	)
 

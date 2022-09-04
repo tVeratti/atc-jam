@@ -60,5 +60,10 @@ environment = SubResource( 4 )
 [node name="DirectionalLight" type="DirectionalLight" parent="WorldEnvironment"]
 transform = Transform( 1, 0, 0, 0, -0.8518, 0.523867, 0, -0.523867, -0.8518, -1.44067, 7.67179, -2.32056 )
 shadow_enabled = true
+shadow_bias = 0.0
+directional_shadow_mode = 0
+directional_shadow_normal_bias = 0.5
+directional_shadow_depth_range = 1
+directional_shadow_max_distance = 300.0
 
 [connection signal="timeout" from="Planes/SpawnTimer" to="." method="_on_SpawnTimer_timeout"]

@@ -58,6 +58,7 @@ func _on_PlaneAvatar_gui_input(event):
 				click_timer.start()
 			else:
 				# Double Click
+				Signals.emit_signal("plane_focused", plane)
 				Signals.emit_signal("plane_followed", plane)
 				click_timer.stop()
 

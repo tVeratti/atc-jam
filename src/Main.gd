@@ -9,6 +9,7 @@ const MIN_SPAWN_TIME:int = 15
 const MAX_PLANES:int = 3
 
 var active_plane:Spatial
+var runway_center:Vector3 = Vector3.ZERO
 
 onready var planes:Spatial = $Planes
 onready var spawn_timer:Timer = $Planes/SpawnTimer

@@ -40,7 +40,9 @@ onready var path_timer:Timer = $PathCheckTimer
 onready var path_mesh:MeshInstance = $PathMesh
 onready var click_timer:Timer = $ClickTimer
 
-onready var animation_player:AnimationPlayer = $MeshInstance/piper_warrior/AnimationPlayer
+onready var mesh_animation_player:AnimationPlayer = $MeshInstance/piper_warrior/AnimationPlayer
+onready var animation_player:AnimationPlayer = $AnimationPlayer
+
 
 func _ready():
 	generate_identity()
@@ -49,8 +51,8 @@ func _ready():
 	var _a = Signals.connect("plane_hovered", self, "_on_plane_hovered_global")
 	var _b = Signals.connect("plane_focused", self, "_on_plane_focused_global")
 	
-	animation_player.get_animation("PropellorAction").set_loop(true)
-	animation_player.play("PropellorAction")
+	mesh_animation_player.get_animation("PropellorAction").set_loop(true)
+	mesh_animation_player.play("PropellorAction")
 
 
 func generate_identity():
@@ -114,7 +116,9 @@ func check_path():
 			var legs = current_pattern.legs.get_children()
 			if next_index < 0 or next_index > legs.size():
 				# The plane is arriving at the runway (end)
-				land()
+				var land_direction:Vector3 = global_transform.origin.direction_to(Vector3.ZERO).normalized()
+				next_path_location = global_transform.origin + (land_direction * 100)
+				animation_player.play("land")
 				return
 			
 			self.current_leg = legs[next_index]
@@ -245,6 +249,7 @@ func _on_Area_input_event(camera, event, position, normal, shape_idx):
 				else:
 					# Double Click
 					click_timer.stop()
+					Signals.emit_signal("plane_focused", self)
 					Signals.emit_signal("plane_followed", self)
 				
 
@@ -256,3 +261,8 @@ func _on_PathCheckTimer_timeout():
 func _on_ClickTimer_timeout():
 	self.focused = !focused
 	Signals.emit_signal("plane_focused", self if focused else null)
+
+
+func _on_AnimationPlayer_animation_finished(anim_name):
+	if anim_name == "land":
+		land()
