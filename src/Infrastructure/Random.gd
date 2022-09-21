@@ -16,4 +16,4 @@ static func get_random_index(array:Array) -> int:
 
 static func roll(maximum:int) -> int:
 	randomize()
-	return int(rand_range(0, maximum)) # int() rounds down
+	return int(randf_range(0, maximum)) # int() rounds down

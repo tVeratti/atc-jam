@@ -1,10 +1,11 @@
-extends Spatial
+extends Node3D
 
 
-export(String) var name_left:String = ""
-export(String) var name_right:String = ""
+@export var name_left:String = ""
+@export var name_right:String = ""
 
-onready var runway_center:Position3D = $MeshInstance/Position3D
+@onready var runway_center:Marker3D = $MeshInstance3D/Marker3D
+
 
 func _ready():
-	Signals.emit_signal("runway_ready", self)
+	Signals.runway_ready.emit(self)

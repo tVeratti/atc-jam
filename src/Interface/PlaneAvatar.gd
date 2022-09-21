@@ -3,18 +3,18 @@ extends Control
 
 var plane
 
-onready var border:Panel = $Border
-onready var call_sign_label:Label = get_node("%CallSign")
-onready var leg_name_label:Label = get_node("%LegName")
-onready var click_timer:Timer = $ClickTimer
+@onready var border:Panel = $Border
+@onready var call_sign_label:Label = get_node("%CallSign")
+@onready var leg_name_label:Label = get_node("%LegName")
+@onready var click_timer:Timer = $ClickTimer
 
 
 func _ready():
 	call_sign_label.text = plane.call_sign
 	
-	var _a = Signals.connect("plane_focused", self, "_on_plane_focused_global")
-	var _b = Signals.connect("plane_landed", self, "_on_plane_landed_global")
-	var _c = plane.connect("leg_assigned", self, "_on_leg_assigned")
+	var _a = Signals.connect("plane_focused",Callable(self,"_on_plane_focused_global"))
+	var _b = Signals.connect("plane_landed",Callable(self,"_on_plane_landed_global"))
+	var _c = plane.connect("leg_assigned",Callable(self,"_on_leg_assigned"))
 
 
 func _on_plane_focused_global(other):
@@ -52,7 +52,7 @@ func _on_PlaneAvatar_mouse_exited():
 
 func _on_PlaneAvatar_gui_input(event):
 	if event is InputEventMouseButton:
-		if event.button_index == BUTTON_LEFT and event.pressed:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if click_timer.is_stopped():
 				# Single Click
 				click_timer.start()

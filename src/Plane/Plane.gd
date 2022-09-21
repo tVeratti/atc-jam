@@ -1,4 +1,4 @@
-extends KinematicBody
+extends Node3D
 
 signal leg_assigned()
 
@@ -7,17 +7,19 @@ enum States {  CLIMB, CRUISE, DESCEND, LAND }
 const PATH_DISTANCE:float = 6.0
 const CIRCLE_DISTANCE:float = 40.0
 const MAX_PITCH:float = 20.0
-const MAX_ROLL:float = 60.0
+const MAX_ROLL:float = 40.0
 
-export(float) var air_speed:float = 2.0
-export(float) var pitch_speed:float = 5.0
-export(float) var roll_speed:float = 1.0
-export(float) var yaw_speed:float = 0.5
+@export var air_speed:float = 2.0
+@export var pitch_speed:float = 5.0
+@export var roll_speed:float = 1.0
+@export var yaw_speed:float = 0.5
 
 var color
 var animal
 var number
-var call_sign setget , _get_call_sign
+var call_sign :
+	get:
+		return "%s %s %s" % [color, animal, number]
 
 var state:int = States.CRUISE
 var next_path_location:Vector3 = Vector3.ZERO
@@ -25,34 +27,54 @@ var _saved_path_location:Vector3 = Vector3.ZERO
 var _path_override:bool = false
 
 var current_turn_angle:float = 0.0
-var current_leg:Spatial setget _set_current_leg
-var current_vector:Vector3 = Vector3.ZERO setget _set_current_vector
+var current_leg:Node3D :
+	set(value):
+		if current_leg == value: return
+		current_leg = value
+		
+		var entry = value.get_entry(global_transform.origin)
+		next_path_location = entry
+		leg_assigned.emit()
 
-var hovered:bool = false setget _set_hovered
-var focused:bool = false setget _set_focused
+var current_vector:Vector3 = Vector3.ZERO :
+	set(value):
+		current_vector = value
+		current_leg = null
+	
+		var origin = global_transform.origin
+		next_path_location = origin.direction_to(origin + current_vector) * 999
 
-onready var mesh:MeshInstance = $MeshInstance
-onready var outline:MeshInstance = get_node("%Outline")
-onready var lookat_test:Position3D = $LookAtTest
-onready var sign_label:Label3D = $Label3D
-onready var path_raycast:RayCast = $PathCheckRayCast
-onready var path_timer:Timer = $PathCheckTimer
-onready var path_mesh:MeshInstance = $PathMesh
-onready var click_timer:Timer = $ClickTimer
+var hovered:bool = false
+var focused:bool = false : 
+	set(value):
+		if focused == value: return
+	
+		focused = value
+		if focused: outline.show()
+		else: outline.hide()
 
-onready var mesh_animation_player:AnimationPlayer = $MeshInstance/piper_warrior/AnimationPlayer
-onready var animation_player:AnimationPlayer = $AnimationPlayer
+@onready var mesh:MeshInstance3D = $MeshInstance3D
+@onready var outline:MeshInstance3D = get_node("%Outline")
+@onready var lookat_test:Marker3D = $LookAtTest
+@onready var sign_label:Label3D = $Label3D
+@onready var path_raycast:RayCast3D = $PathCheckRayCast
+@onready var path_timer:Timer = $PathCheckTimer
+@onready var path_mesh:MeshInstance3D = $PathMesh
+@onready var click_timer:Timer = $ClickTimer
+
+#@onready var mesh_animation_player:AnimationPlayer = $MeshInstance3D/piper_warrior/AnimationPlayer
+@onready var animation_player:AnimationPlayer = $AnimationPlayer
 
 
 func _ready():
 	generate_identity()
 	sign_label.text = self.call_sign
 	
-	var _a = Signals.connect("plane_hovered", self, "_on_plane_hovered_global")
-	var _b = Signals.connect("plane_focused", self, "_on_plane_focused_global")
+	var _a = Signals.plane_hovered.connect(self._on_plane_hovered_global)
+	var _b = Signals.plane_focused.connect(self._on_plane_focused_global)
 	
-	mesh_animation_player.get_animation("PropellorAction").set_loop(true)
-	mesh_animation_player.play("PropellorAction")
+#	mesh_animation_player.get_animation("PropellorAction").set_loop(true)
+#	mesh_animation_player.play("PropellorAction")
 
 
 func generate_identity():
@@ -62,8 +84,8 @@ func generate_identity():
 
 
 func _physics_process(delta):
-	global_transform.origin -= global_transform.basis.z * delta * air_speed
-	
+	global_transform.origin -= global_transform.basis.z * delta * air_speed # CRASHING??
+
 	check_path()
 	check_raycast()
 	handle_pitch(delta)
@@ -81,26 +103,26 @@ func handle_pitch(delta) -> void:
 
 func handle_roll(delta) -> void:
 	var percentage_roll:float = clamp(current_turn_angle / 90, -1, 1)
-	mesh.rotation_degrees.z = lerp(mesh.rotation_degrees.z, percentage_roll * MAX_ROLL, roll_speed * delta)
+	mesh.rotation.z = lerp(mesh.rotation.z, percentage_roll * MAX_ROLL, roll_speed * delta)
 
 
 func handle_yaw(delta) -> void:
 	lookat_test.look_at(next_path_location, Vector3.UP)
-	var target_rotation:Quat = lookat_test.global_transform.basis.get_rotation_quat()
-	var current_rotation:Quat = global_transform.basis.get_rotation_quat()
+	var target_rotation:Quaternion = lookat_test.global_transform.basis.get_rotation_quaternion()
+	var current_rotation:Quaternion = global_transform.basis.get_rotation_quaternion()
 	
-	var next_rotation:Quat = current_rotation.slerp(target_rotation, yaw_speed * delta)
+	var next_rotation:Quaternion = current_rotation.slerp(target_rotation, yaw_speed * delta)
 	var next_basis = Basis(next_rotation)
 	
 	var turn_direction = global_transform.basis.z.signed_angle_to(next_basis.z, Vector3.UP)
 	var turn_multiplier:int = 1 if turn_direction > 0 else -1
-	current_turn_angle = rad2deg(current_rotation.angle_to(target_rotation)) * turn_multiplier
+	current_turn_angle = rad_to_deg(current_rotation.angle_to(target_rotation)) * turn_multiplier
 	
 	global_transform.basis = next_basis
 
 
 func check_path():
-	if not is_instance_valid(current_leg): return # not on a pattern yet
+	if not is_instance_valid(current_leg): return # not checked a pattern yet
 	
 	path_mesh.global_transform.origin = next_path_location
 	if global_transform.origin.distance_to(next_path_location) < PATH_DISTANCE:
@@ -135,7 +157,7 @@ func check_raycast():
 	
 	if not path_raycast.enabled: return
 	if path_raycast.is_colliding() and not _path_override:
-		var collider:Spatial = path_raycast.get_collider().get_parent().get_parent()
+		var collider:Node3D = path_raycast.get_collider().get_parent().get_parent()
 		var collision_point:Vector3 = path_raycast.get_collision_point()
 		if collider.has_method("get_entry"):
 			if collider != current_leg and collision_point.distance_to(path) > PATH_DISTANCE:
@@ -149,22 +171,22 @@ func check_raycast():
 
 
 func land():
-	Signals.emit_signal("plane_landed", self)
+	Signals.plane_landed.emit(self)
 	queue_free()
 
 
 func _pitch_mesh(amount:float, delta:float) -> void:
-	mesh.rotation_degrees.x = lerp(mesh.rotation_degrees.x, amount, delta * pitch_speed)
+	mesh.rotation.x = lerp(mesh.rotation.x, amount, delta * pitch_speed)
 
 
 func _roll_mesh(amount:float, delta:float) -> void:
-	mesh.rotation_degrees.z = lerp(mesh.rotation_degrees.z, amount, delta * roll_speed)
+	mesh.rotation.z = lerp(mesh.rotation.z, amount, delta * roll_speed)
 
 
 func _update_path_to_avoid(collision_point:Vector3):
 	var origin:Vector3 = global_transform.origin
 	var origin_2d:Vector2 = Vector2(origin.x, origin.z)
-	var angle:float = origin_2d.angle_to_point(Vector2.ZERO) + deg2rad(20.0)
+	var angle:float = origin_2d.angle_to_point(Vector2.ZERO) + deg_to_rad(20.0)
 	
 	var x:float = CIRCLE_DISTANCE * cos(angle)
 	var y:float = CIRCLE_DISTANCE * sin(angle)
@@ -176,43 +198,6 @@ func _update_path_to_avoid(collision_point:Vector3):
 		_path_override = true
 	
 	next_path_location = Vector3(x, 0, y)
-
-
-# Getters/Setters
-# ------------------------------- 
-
-func _get_call_sign() -> String:
-	return "%s %s %s" % [color, animal, number]
-
-
-func _set_current_leg(leg) -> void:
-	if current_leg == leg: return
-	current_leg = leg
-	
-	var entry = leg.get_entry(global_transform.origin)
-	next_path_location = entry
-	emit_signal("leg_assigned")
-
-
-func _set_current_vector(value) -> void:
-	current_vector = value
-	current_leg = null
-	
-	var origin = global_transform.origin
-	next_path_location = origin.direction_to(origin + current_vector) * 999
-
-
-func _set_hovered(value) -> void:
-	if hovered == value: return
-	hovered = value
-
-
-func _set_focused(value) -> void:
-	if focused == value: return
-	
-	focused = value
-	if focused: outline.show()
-	else: outline.hide()
 
 
 # Global Signals
@@ -231,26 +216,26 @@ func _on_plane_focused_global(other):
 
 func _on_Area_mouse_entered():
 	self.hovered = true
-	Signals.emit_signal("plane_hovered", self)
+	Signals.plane_hovered.emit(self)
 	
 
 func _on_Area_mouse_exited():
 	self.hovered = false
-	Signals.emit_signal("plane_hovered", null)
+	Signals.plane_hovered.emit(null)
 
 
 func _on_Area_input_event(camera, event, position, normal, shape_idx):
 	if event is InputEventMouseButton:
-		if event.button_index == BUTTON_LEFT and event.pressed:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if hovered:
 				if click_timer.is_stopped():
 					# Single Click
-					 click_timer.start()
+					click_timer.start()
 				else:
 					# Double Click
 					click_timer.stop()
-					Signals.emit_signal("plane_focused", self)
-					Signals.emit_signal("plane_followed", self)
+					Signals.plane_focused.emit(self)
+					Signals.plane_followed.emit(self)
 				
 
 
@@ -260,7 +245,7 @@ func _on_PathCheckTimer_timeout():
 
 func _on_ClickTimer_timeout():
 	self.focused = !focused
-	Signals.emit_signal("plane_focused", self if focused else null)
+	Signals.plane_focused.emit( self if focused else null)
 
 
 func _on_AnimationPlayer_animation_finished(anim_name):

@@ -1,50 +1,40 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=8 format=3 uid="uid://cd3fk64gn1j8f"]
 
-[ext_resource path="res://Runway.tscn" type="PackedScene" id=1]
-[ext_resource path="res://MainCamera.gd" type="Script" id=2]
-[ext_resource path="res://Main.gd" type="Script" id=3]
-[ext_resource path="res://Interface/Interface.tscn" type="PackedScene" id=4]
+[ext_resource type="PackedScene" path="res://Runway.tscn" id="1"]
+[ext_resource type="Script" path="res://MainCamera.gd" id="2"]
+[ext_resource type="Script" path="res://Main.gd" id="3"]
+[ext_resource type="PackedScene" path="res://Interface/Interface.tscn" id="4"]
 
-[sub_resource type="QuadMesh" id=1]
-size = Vector2( 200, 200 )
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_vwwa4"]
 
-[sub_resource type="SpatialMaterial" id=2]
-albedo_color = Color( 0.25098, 0.45098, 0.239216, 1 )
+[sub_resource type="Sky" id="Sky_cfrk7"]
+sky_material = SubResource("ProceduralSkyMaterial_vwwa4")
 
-[sub_resource type="ProceduralSky" id=3]
-ground_bottom_color = Color( 0.839216, 0.917647, 0.980392, 1 )
-ground_horizon_color = Color( 0.839216, 0.917647, 0.980392, 1 )
-sun_energy = 4.3
-
-[sub_resource type="Environment" id=4]
+[sub_resource type="Environment" id="Environment_x37oh"]
 background_mode = 2
-background_sky = SubResource( 3 )
-ambient_light_color = Color( 0.243137, 0.243137, 0.243137, 1 )
-ambient_light_sky_contribution = 0.5
+sky = SubResource("Sky_cfrk7")
 tonemap_mode = 2
 
-[node name="Main" type="Spatial"]
-script = ExtResource( 3 )
+[node name="Main" type="Node3D"]
+script = ExtResource("3")
 
-[node name="Runway" parent="." instance=ExtResource( 1 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0 )
+[node name="Runway" parent="." instance=ExtResource("1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 
-[node name="Ground" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, -10, 0 )
-mesh = SubResource( 1 )
-material/0 = SubResource( 2 )
+[node name="Ground" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, -10, 0)
 
-[node name="MainCamera" type="Spatial" parent="."]
-script = ExtResource( 2 )
+[node name="MainCamera" type="Node3D" parent="."]
+script = ExtResource("2")
 
-[node name="CameraTarget" type="Spatial" parent="MainCamera"]
+[node name="CameraTarget" type="Node3D" parent="MainCamera"]
 
-[node name="Camera" type="Camera" parent="MainCamera"]
-transform = Transform( 1, 0, 0, 0, 0.337818, 0.941211, 0, -0.941211, 0.337818, 0, 40, 8.44604 )
+[node name="Camera3D" type="Camera3D" parent="MainCamera"]
+transform = Transform3D(1, 0, 0, 0, 0.337818, 0.941211, 0, -0.941211, 0.337818, 0, 40, 8.44604)
 current = true
 far = 200.0
 
-[node name="Planes" type="Spatial" parent="."]
+[node name="Planes" type="Node3D" parent="."]
 
 [node name="SpawnTimer" type="Timer" parent="Planes"]
 one_shot = true
@@ -52,18 +42,19 @@ autostart = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
-[node name="Interface" parent="CanvasLayer" instance=ExtResource( 4 )]
+[node name="Interface" parent="CanvasLayer" instance=ExtResource("4")]
+anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource( 4 )
+environment = SubResource("Environment_x37oh")
 
-[node name="DirectionalLight" type="DirectionalLight" parent="WorldEnvironment"]
-transform = Transform( 1, 0, 0, 0, -0.8518, 0.523867, 0, -0.523867, -0.8518, -1.44067, 7.67179, -2.32056 )
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, -0.8518, 0.523867, 0, -0.523867, -0.8518, -1.44067, 7.67179, -2.32056)
 shadow_enabled = true
 shadow_bias = 0.0
 directional_shadow_mode = 0
-directional_shadow_normal_bias = 0.5
-directional_shadow_depth_range = 1
 directional_shadow_max_distance = 300.0
 
 [connection signal="timeout" from="Planes/SpawnTimer" to="." method="_on_SpawnTimer_timeout"]

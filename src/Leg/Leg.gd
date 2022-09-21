@@ -1,38 +1,63 @@
-extends Spatial
+extends Node3D
 
 const MIDPOINT_LEGS:Array = [Globals.Legs.DOWNWIND]
 const NO_ENTRY_LEGS:Array = [Globals.Legs.DEPARTURE, Globals.Legs.CROSSWIND]
 
 
 # The leg's physical direction and magnitude for scaling the mesh.
-var start:Vector2 = Vector2.ZERO setget _set_start
-var end:Vector2 = Vector2.ZERO setget _set_end
+var start:Vector2 = Vector2.ZERO :
+	set(value):
+		start = value
+		update_direction_vector()
+var end:Vector2 = Vector2.ZERO :
+	set(value):
+		end = value
+		update_direction_vector()
 
 # The right/left direction of the parent pattern for the texture movement.
-var direction:int setget _set_direction
+var direction:int :
+	set(value):
+		direction = value
+		_update_index_directional()
+		update_direction_vector()
 
-# Derived label based on direction and index within the overall pattern
-var label:String setget , _get_label
+# Derived label based checked direction and index within the overall pattern
+var label:String :
+	get:
+		return _get_label()
 var index:int = 0
 var index_directional:int = 0
 
 var hovered:bool = false
-var focused:bool = false setget _set_focused
-var disabled:bool setget , _get_disabled
-var full_name:String setget , _get_full_name
+var focused:bool = false :
+	set(value):
+		if focused == value: return
+		focused = value
+		
+		var color = Colors.GREEN
+		if focused: color = Colors.YELLOW
+		material.set_shader_parameter("color", color)
+var disabled:bool :
+	get:
+		return NO_ENTRY_LEGS.has(index_directional)
+var full_name:String :
+	get:
+		var directions =  Globals.Directions
+		var runway = pattern.runway.name_left if pattern.direction == directions.LEFT else pattern.runway.name_right
+		return "%s %s %s" % [runway, directions.keys()[pattern.direction], _get_label()]
 
 # Nodes
-onready var pattern =  get_parent().get_parent()
-onready var mesh:MeshInstance = $MeshInstance
-onready var material:Material = mesh.get_surface_material(0)
-onready var label_3d:Label3D = $Label3D
+@onready var pattern =  get_parent().get_parent()
+@onready var mesh:MeshInstance3D = $MeshInstance3D
+@onready var material:Material = mesh.get_surface_override_material(0)
+@onready var label_3d:Label3D = $Label3D
 
 
 func _ready():
 	update_direction_vector()
 	
-	var _a = Signals.connect("leg_clicked", self, "_on_leg_clicked")
-	var _b = Signals.connect("plane_focused", self, "_on_plane_focused")
+	var _a = Signals.connect("leg_clicked",Callable(self,"_on_leg_clicked"))
+	var _b = Signals.connect("plane_focused",Callable(self,"_on_plane_focused"))
 
 
 func update_direction_vector():
@@ -57,11 +82,11 @@ func update_direction_vector():
 	
 	
 	label_3d.text = self.label
-	label_3d.rotation_degrees.y = 90 if is_left else -90
+	label_3d.rotation.y = 90 if is_left else -90
 	
 	mesh.scale.x = size
-	material.set_shader_param("size", size)
-	material.set_shader_param("direction", shader_direction)
+	material.set_shader_parameter("size", size)
+	material.set_shader_parameter("direction", shader_direction)
 
 
 func get_entry(from_point:Vector3) -> Vector3:
@@ -85,6 +110,9 @@ func get_exit() -> Vector3:
 	return Vector3(end_directional.x, 0, end_directional.y)
 
 
+func update_direction(value): self.direction = value
+
+
 func _get_center() -> Vector2:
 	var x = (start.x + end.x) / 2
 	var y = (start.y + end.y) / 2
@@ -92,45 +120,8 @@ func _get_center() -> Vector2:
 	return Vector2(x,  y)
 
 
-func _set_start(value:Vector2) -> void:
-	start = value
-	update_direction_vector()
-
-
-func _set_end(value:Vector2) -> void:
-	end = value
-	update_direction_vector()
-
-
-func _set_direction(value:int) -> void:
-	direction = value
-	
-	_update_index_directional()
-	update_direction_vector()
-
-
-func _set_focused(value) -> void:
-	if focused == value: return
-	focused = value
-	
-	var color = Colors.GREEN
-	if focused: color = Colors.YELLOW
-	material.set_shader_param("color", color)
-
-
 func _get_label() -> String:
 	return Globals.Legs.keys()[index_directional]
-
-
-func _get_disabled() -> bool:
-	return NO_ENTRY_LEGS.has(index_directional)
-
-
-func _get_full_name() -> String:
-	var directions =  Globals.Directions
-	var runway = pattern.runway.name_left if pattern.direction == directions.LEFT else pattern.runway.name_right
-	
-	return "%s %s %s" % [runway, directions.keys()[pattern.direction], _get_label()]
 
 
 func _update_index_directional() -> void:
@@ -154,7 +145,7 @@ func _on_Area_mouse_exited():
 
 func _on_Area_input_event(camera, event, position, normal, shape_idx):
 	if event is InputEventMouseButton:
-		if event.button_index == BUTTON_LEFT and event.pressed:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if hovered and not self.disabled:
 				Signals.emit_signal("leg_clicked", self)
 				self.focused = !focused

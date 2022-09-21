@@ -1,4 +1,4 @@
-extends Spatial
+extends Node3D
 
 const Y_DISTANCE_MAX:float = 50.0
 const Y_DISTANCE_MIN:float = 10.0
@@ -8,14 +8,14 @@ var camera_speed:float = 3.0
 var scroll_speed:float = 1.0
 
 var zoom_offset:float = 20.0
-var camera_focus:Spatial
-onready var camera_target:Spatial = $CameraTarget
-onready var camera:Camera = $Camera
+var camera_focus:Node3D
+@onready var camera_target:Node3D = $CameraTarget
+@onready var camera:Camera3D = $Camera3D
 
 
 func _ready():
-	var _a = Signals.connect("plane_focused", self, "_on_plane_focused")
-	var _b = Signals.connect("plane_followed", self, "_on_plane_followed")
+	var _a = Signals.plane_focused.connect(self._on_plane_focused)
+	var _b = Signals.plane_followed.connect(self._on_plane_followed)
 
 
 func _physics_process(delta):
